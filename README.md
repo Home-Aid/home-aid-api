@@ -21,3 +21,6 @@
 ```
 uvicorn src.app.main:app --host 0.0.0.0 --port 8080 --reload
 ```
+
+userId: root
+pass: Abcd@1234

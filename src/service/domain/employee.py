@@ -2,12 +2,12 @@ import copy
 import uuid
 from src.utils.mongodb.mongodb import MongoService
 from bson.objectid import ObjectId
-from src.utils.constants import USER_DB
+from src.utils.constants import EMPLOYEE_DB
 from fastapi import HTTPException
 from src.utils.logging import logger
 
 
-def get_user(**kwargs):
+def getEmployee(**kwargs):
     """
     Retrieve user information from the database.
 
@@ -18,10 +18,10 @@ def get_user(**kwargs):
     Returns:
         dict: User information.
     """
-    return MongoService.fetch(USER_DB, kwargs)
+    return MongoService.fetch(EMPLOYEE_DB, kwargs)
 
 
-def create_user(**kwargs):
+def createEmployee(**kwargs):
     """
     Create a new user and insert their information into the database.
 
@@ -31,17 +31,17 @@ def create_user(**kwargs):
     Returns:
         dict: Result of the insertion operation.
     """
-    user = get_user(email=kwargs["email"])
-    if user:
+    employee = getEmployee(email=kwargs["email"])
+    if employee:
         raise HTTPException(
-            status_code=400, detail=f"User with this email already exists with email: {kwargs['email']}")
+            status_code=400, detail=f"Employee with this email already exists with email: {kwargs['email']}")
     
-    kwargs["user_id"] = str(uuid.uuid4())
-    inserted_id = MongoService.insert(USER_DB, data=copy.deepcopy(kwargs))
+    kwargs["employeeId"] = str(uuid.uuid4())
+    inserted_id = MongoService.insert(EMPLOYEE_DB, data=copy.deepcopy(kwargs))
     return kwargs
 
 
-def update_user(**kwargs):
+def updateEmployee(**kwargs):
     """
     Update user information in the database.
 
@@ -51,13 +51,13 @@ def update_user(**kwargs):
     Returns:
         dict: Result of the update operation.
     """
-    user_id = kwargs.pop("user_id")
-    user = get_user(user_id)
-    if not user:
-        return {"success": False, "error": "User not found"}
+    employeeId = kwargs.pop("employeeId")
+    employee = getEmployee(employeeId=employeeId)
+    if not employee:
+        return {"success": False, "error": "Employee not found"}
 
     result = MongoService.update(
-        USER_DB, {"user_id": user_id}, {"$set": kwargs})
+        EMPLOYEE_DB, {"employeeId": employeeId}, {"$set": kwargs})
     return True
 
 

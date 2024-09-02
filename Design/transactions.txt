@@ -1,0 +1,16 @@
+Transactions Table
+Tracks detailed financial transactions for taxes and employee payments.
+
+
+1. transactions
+{
+    id: int AUTO_INCREMENT,
+    type: "tax", "employeePayment",
+    employeeId: employeeId, # if type is employeePayment,
+    orderIds: [orderId],
+    amount: 100,
+    createdAt: "2021-09-01T00:00:00.000Z",
+}
+
+
+
