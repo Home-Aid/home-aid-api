@@ -35,6 +35,12 @@ app.add_middleware(
 def read_root(request: Request):
     return {f"{svc_name}": "Running public API"}
 
+
+@app.get("/createTables")
+def create_tables():
+    from src.utils.contextManager import tables
+    return "Tables created successfully"
+
 # @app.post("/signup", tags=["Sign Up / Login"])
 # def sign_up_user(user: users_validator.CreateUser):
 #     return sign_up(user.__dict__)

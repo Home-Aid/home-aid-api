@@ -2,11 +2,27 @@ from pydantic import BaseModel, validator
 from typing import Optional
 import re
 
+class Address(BaseModel):
+    longitude: float
+    latitude: float
+    address: str
+    city: str
+    state: str
+    zip: str
+
+    # Validate the zip code
+    @validator('zip')
+    def zip_validator(cls, zip):
+        if not re.match(r"^\d{6}$", zip):
+            raise ValueError("Invalid zip code format")
+        return zip
+
 class CreateEmployee(BaseModel):
     name: str
     email: str
-    password: str
+    hashedPassword: str
     mobile: str
+    address: Address
     
 
     # Validate the email

@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from typing import Optional
-# from src.lib.validator import users as users_validator
-# from src.lib.domain import users as users_domain
 from src.app.validator import employee as employeeValidator
 from src.service.domain import employee as employeeDomain
 router = APIRouter()

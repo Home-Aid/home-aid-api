@@ -106,7 +106,7 @@ Booking Use Case
             Fields: id, userId, status [pending, completed, rejected], paymentStatus [pending, completed, failed, refunded], total, discount, tax, grandTotal, paymentId, createdAt, updatedAt
 
         b. BookingDetails
-            Fields: id, bookingId, serviceId, baseCharge, rate, numberOfItems, total, createdAt, updatedAt
+            Fields: id, bookingId, serviceId, baseCharge, status[pending, assigned, completed], rate, numberOfItems, total, createdAt, updatedAt
         
         c. Payments
             Fields: id, bookingId, paymentMethod [card, cash, upi], amount, status [pending, completed, failed], createdAt, updatedAt
