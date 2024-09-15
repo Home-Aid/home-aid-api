@@ -1,0 +1,180 @@
+Home-Aid Workflow Documentation
+
+Generic Tables Used
+    i. Services: Stores the standard services provided by the company.
+        Fields: id, name [cooking, dishWashing, mopping, laundry], baseCharge, baseChargeDescription, rate, rateDescription, description, isActive, commission (5%, 10%), createdAt, updatedAt
+
+    ii. Address: Stores the addresses of users and employees.
+        Fields: id, longitude, latitude, address, city, state, zip, isActive, createdAt, updatedAt
+
+    iii. Employee Slots: Stores the slots of employees by 1 hour intervals total working 9 hours.
+        Fields: id, slot1, slot2, slot3, slot4, slot5, slot6, slot7, slot8, slot9, isActive, createdAt, updatedAt
+
+
+
+Employee Use Case
+    i. Tables Involved
+        a. Employee
+            Fields: id, name, email, phone, hashedPassword, addressId, isActive, serviceActive, morningShift, eveningShift, cooking, dishWashing, mopping, laundry
+        
+        b. Address: (Refer Generic Tables Used)
+        c. serviceableArea: (Refer Generic Tables Used)
+
+    ii. APIs: 
+        a. signUp: Employee can sign up with the company.
+            Request: 
+                name, email, phone, password, addressId, 
+            
+        b. Add/Update Serviceable Area: Employee can add/update the serviceable area.
+            Request: list of serviceable areas
+        
+        c. Update Prefrences:
+            request: serviceActive, cooking, dishWashing, mopping, laundry
+        
+        d. Upcomming bookings: Employee can see the upcomming bookings.
+            Response: list of bookings
+        
+        e. Booking History: Employee can see the booking history.
+            Response: list of bookings
+
+        f. Earning Report: 
+            Response: 
+                totalEarning, pendingPayments, receivedPayments
+        
+        g. Update booking status: 
+            Request: bookingDetailsId, status [accepted, rejected, completed]
+            
+User Use Case
+    i. Tables Involved
+        a. User
+            Fields: id, name, email, phone, hashedPassword, addressId, isActive
+        
+        b. Address: (Refer Generic Tables Used)
+
+    ii. APIs: 
+        a. signUp: User can sign up with the company.
+            Request: 
+                name, email, phone, password, addressId, 
+            
+        b. See Available Services in Region on Specific Date
+            Request: date, longitude, latitude
+            Response: list of services
+            Logic: 
+                * Find employees with their services in the specified region within a certain radius.
+                * Show available services, total price, and allow the user to select date and time
+
+        c. Book Service
+            request: 
+                booking: userId, address, total, discount, tax, grandTotal, paymentId, paymentStatus
+
+                bookingDetails: serviceId, baseCharge, rate, numberOfItems, total
+            
+            Response: 
+                bookingId, bookingDetailsId, total, discount, tax, grandTotal, paymentId, paymentStatus
+
+            Logic:
+                * Validate the booking details
+                    total = sum(baseCharge + rate * numberOfItems)
+                * Validate booking
+                    total = sum of bookingDetails total
+                    grandTotal = total - discount + tax
+                
+                * Add companyCommissionRate and companyCommission from booking total.
+                * Add employeeEarning total - companyCommission
+
+        d. Cancel Booking
+            Request: bookingId
+            Response: 
+                bookingId, status [cancelled]
+            
+            Logic:
+                * If Employee is assigned to the booking then cancel not allowed.
+                * Update booking status to cancelled
+                * Refund the payment to the user
+            
+        e. Booking History
+            Response: list of bookings
+        
+        f. profile Update
+            Request: name, addressId
+            Response: 
+                name, email, phone, addressId
+                
+Booking Use Case
+    i. Tables Involved
+        a. Booking
+            Fields: id, userId, status [pending, completed, rejected], paymentStatus [pending, completed, failed, refunded], total, discount, tax, grandTotal, paymentId, createdAt, updatedAt
+
+        b. BookingDetails
+            Fields: id, bookingId, serviceId, baseCharge, rate, numberOfItems, total, createdAt, updatedAt
+        
+        c. Payments
+            Fields: id, bookingId, paymentMethod [card, cash, upi], amount, status [pending, completed, failed], createdAt, updatedAt
+
+
+Employee Assignment Algorithm for Bookings
+
+Trigger Event: When a booking is created.
+
+Steps:
+
+    1. Fetch booking with status pending and paymentStatus completed.
+    2. Make set of service required by booking.
+    3. Set initial search radius to 1 km.
+
+    <!-- Single Employee Search -->
+
+    4. Search Loop (Until suitable employee found or radius > 3 km):
+        i.   Find Employees:
+                * Identify employees offering all required services within the current radius.
+        ii.  Filter Employees:
+                * Remove employees whose time slots do not match the booking time.
+        iii. Evaluate Candidates:
+                * For each remaining employee, calculate the distance to the booking address.
+        iv.  Sort Candidates:
+                * Sort employees first by availability (less busy preferred) and then by distance (closest preferred).
+        v.  Assign Employee:
+                * If sorted list is not empty:
+                    * Assign the top candidate to the booking.
+                    * Update booking status to accepted.
+                    * Book the employee's slot.
+                    * Send notifications to both user and employee.
+                    * Exit the loop.
+        vi. Increase Radius:
+                * Increase the search radius by 1 km.
+    
+    
+
+    <!-- If no single employee is found after radius > 3 km -->
+    <!-- Handle Partial Assignments -->
+
+    5. Partial Service Assignment Loop:
+        i.  Hash of services to be assigned.
+        ii. Iterate Over Each Services (BookingDetails):
+            a. Initialize radius to 1 km.
+            b. Search Loop (until employee found or radius > 3 km):
+                i. Find Employees:
+                    * Identify employees offering the current service within the current radius.
+                ii. Filter Employees:
+                    * Remove employees whose time slots do not match the booking time.
+                iii. Evaluate Candidates:
+                    * For each remaining employee, calculate the distance to the booking address.
+                iv. Sort Candidates:
+                    * Sort employees first by availability (less busy preferred) and then by distance (closest preferred).
+                v. Assign Employee:
+                    * If sorted list is not empty:
+                        * Fill the hash with the assigned employee.
+                        * break the search loop.
+                vi. Increase Radius by 1 km.
+        
+        iii. If all the service hash is filled:
+            * Assign the employee to respective services.
+            * Update the booking status.
+            * Book the employee's slot.
+            * Send notifications to both user and employee.
+    
+    6. Handle No Assignment:
+        i. If no suitable employees in both single and partial assignment:
+            * Update booking status to rejected.
+            * Send notification to the user.
+            * Initiate refund process.
